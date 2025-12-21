@@ -1,15 +1,18 @@
 package org.develop.classe;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private final String URL = "jdbc:postgresql://localhost:5432/mini_football_db";
-    private final String USER = "mini_football_db_manager";
-    private final String PASSWORD = "123456";
+    Dotenv dotenv = Dotenv.load();
+    private final String URL = dotenv.get("DB_URL");
+    private final String USER = dotenv.get("DB_USER");
+    private final String PASSWORD = dotenv.get("DB_PASSWORD");
     public Connection getConnection() {
-        try {
+        try {3
             return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
             System.out.println("Erreur de connexion : " + e.getMessage());

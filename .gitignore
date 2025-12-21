@@ -34,5 +34,8 @@ build/
 ### VS Code ###
 .vscode/
 
+### Dependancy
+.env
+
 ### Mac OS ###
 .DS_Store

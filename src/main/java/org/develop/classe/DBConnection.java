@@ -12,7 +12,7 @@ public class DBConnection {
     private final String USER = dotenv.get("DB_USER");
     private final String PASSWORD = dotenv.get("DB_PASSWORD");
     public Connection getConnection() {
-        try {3
+        try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
             System.out.println("Erreur de connexion : " + e.getMessage());

@@ -9,12 +9,11 @@ public class Player {
     private final PlayerPositionEnum position;
     private final Team team;
 
-    public Player(int id, String name, PlayerPositionEnum position, Team team) {
+    public Player(int id, String name, int age, PlayerPositionEnum position, Team team) {
         this.id = id;
         this.name = name;
         this.position = position;
         this.team = team;
-
     }
 
     public int getId() {
@@ -33,6 +32,10 @@ public class Player {
         return team;
     }
 
+    public String getTeamName() {
+        return team != null ? team.getName() : "Aucune équipe";
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -42,7 +45,10 @@ public class Player {
             return false;
         }
         Player player = (Player) o;
-        return id == player.id && Objects.equals(name, player.name) && position == player.position && Objects.equals(team, player.team);
+        return id == player.id &&
+                Objects.equals(name, player.name) &&
+                position == player.position &&
+                Objects.equals(team, player.team);
     }
 
     @Override
@@ -52,15 +58,11 @@ public class Player {
 
     @Override
     public String toString() {
-        return "Player{"
-                + "id=" + id
-                + ", name='" + name + '\''
-                + ", position=" + position
-                + ", team=" + team
-                + '}';
-    }
-
-    public String getTeamName() {
-        throw new RuntimeException("Not implemented yet");
+        return "Player{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", position=" + position +
+                ", team=" + (team != null ? team.getName() : "aucune") +
+                '}';
     }
 }

@@ -1,13 +1,22 @@
 package org.develop.classe;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class Team {
+
     private final int id;
     private final String name;
     private final ContinentEnum continent;
-    private final List<Player> players;
+    private final List<Player> players = new ArrayList<>();
+
+    public Team(int id, String name, ContinentEnum continent) {
+        this.id = id;
+        this.name = name;
+        this.continent = continent;
+    }
 
     public int getId() {
         return id;
@@ -22,22 +31,16 @@ public class Team {
     }
 
     public List<Player> getPlayers() {
-        return players;
+        return Collections.unmodifiableList(players);
     }
 
-    public Team(int id, String name, ContinentEnum continent, List<Player> players) {
-        this.id = id;
-        this.name = name;
-        this.continent = continent;
-        this.players = players;
-
-        for (int i = 0; i < players.size(); i++) {
-
+    public void addPlayer(Player player) {
+        if (player != null && !players.contains(player)) {
+            players.add(player);
         }
     }
 
-
-    public Integer getPlayerCount(){
+    public Integer getPlayerCount() {
         return players.size();
     }
 
@@ -46,7 +49,10 @@ public class Team {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Team team = (Team) o;
-        return id == team.id && Objects.equals(name, team.name) && continent == team.continent && Objects.equals(players, team.players);
+        return id == team.id &&
+                Objects.equals(name, team.name) &&
+                continent == team.continent &&
+                Objects.equals(players, team.players);
     }
 
     @Override
@@ -60,7 +66,7 @@ public class Team {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", continent=" + continent +
-                ", players=" + players +
+                ", playerCount=" + players.size() +
                 '}';
     }
 }

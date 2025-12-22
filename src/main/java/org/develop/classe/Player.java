@@ -3,6 +3,7 @@ package org.develop.classe;
 import java.util.Objects;
 
 public class Player {
+
     private final int id;
     private final String name;
     private final PlayerPositionEnum position;
@@ -14,10 +15,7 @@ public class Player {
         this.position = position;
         this.team = team;
 
-
     }
-
-
 
     public int getId() {
         return id;
@@ -37,8 +35,12 @@ public class Player {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Player player = (Player) o;
         return id == player.id && Objects.equals(name, player.name) && position == player.position && Objects.equals(team, player.team);
     }
@@ -50,12 +52,12 @@ public class Player {
 
     @Override
     public String toString() {
-        return "Player{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", position=" + position +
-                ", team=" + team +
-                '}';
+        return "Player{"
+                + "id=" + id
+                + ", name='" + name + '\''
+                + ", position=" + position
+                + ", team=" + team
+                + '}';
     }
 
     public String getTeamName() {

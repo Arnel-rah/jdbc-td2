@@ -174,9 +174,44 @@ public class DataRetriever {
     }
 
 
-    public Team saveTeam(Team teamToSave) {
-        throw new UnsupportedOperationException("Not supported yet.");
+   public Team saveTeam(Team teamToSave) {
+    if (teamToSave == null) {
+        return null;
     }
+
+    String query = """
+        INSERT INTO team (name, continent)
+        VALUES (?, ?)
+    """;
+
+    try (Connection conn = dbConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(
+                 query, Statement.RETURN_GENERATED_KEYS)) {
+
+        stmt.setString(1, teamToSave.getName());
+        stmt.setString(2, teamToSave.getContinent().name());
+
+        stmt.executeUpdate();
+
+        try (ResultSet rs = stmt.getGeneratedKeys()) {
+            if (rs.next()) {
+                return new Team(
+                        rs.getInt(1),
+                        teamToSave.getName(),
+                        teamToSave.getContinent()
+                );
+            }
+        }
+
+        throw new RuntimeException("Impossible de récupérer l'id de l'equipe créer");
+
+    } catch (SQLException e) {
+        throw new RuntimeException(
+                "Erreur  : " + teamToSave.getName(), e
+        );
+    }
+}
+
 
     public List<Team> findTeamsByPlayerName(String playerName) {
         throw new UnsupportedOperationException("Not supported yet.");

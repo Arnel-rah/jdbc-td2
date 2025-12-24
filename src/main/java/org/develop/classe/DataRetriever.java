@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,8 +114,65 @@ public class DataRetriever {
 
 
     public List<Player> createPlayers(List<Player> newPlayers) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (newPlayers == null || newPlayers.isEmpty()) {
+            return List.of();
+        }
+
+        String query = """
+        INSERT INTO player (name, age, position, id_team)
+        VALUES (?, ?, ?, ?)
+    """;
+
+        List<Player> createdPlayers = new ArrayList<>();
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     query, Statement.RETURN_GENERATED_KEYS)) {
+
+            conn.setAutoCommit(false);
+
+            for (Player player : newPlayers) {
+                stmt.setString(1, player.getName());
+                stmt.setInt(2, player.getAge());
+                stmt.setString(3, player.getPosition().name());
+
+                if (player.getTeam() != null) {
+                    stmt.setInt(4, player.getTeam().getId());
+                } else {
+                    stmt.setNull(4, Types.INTEGER);
+                }
+
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                int index = 0;
+                while (rs.next()) {
+                    Player original = newPlayers.get(index);
+
+                    Player created = new Player(
+                            rs.getInt(1),
+                            original.getName(),
+                            original.getAge(),
+                            original.getPosition(),
+                            original.getTeam()
+                    );
+
+                    createdPlayers.add(created);
+                    index++;
+                }
+            }
+
+            conn.commit();
+            return createdPlayers;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur" + " " + e);
+        }
     }
+
 
     public Team saveTeam(Team teamToSave) {
         throw new UnsupportedOperationException("Not supported yet.");

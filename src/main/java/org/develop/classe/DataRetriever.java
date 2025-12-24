@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DataRetriever {
@@ -61,8 +62,54 @@ public class DataRetriever {
     }
 
     public List<Player> findPlayers(int page, int size) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String query = """
+        SELECT p.id, p.name, p.age, p.position,
+               t.id AS team_id, t.name AS team_name, t.continent
+        FROM player p
+        LEFT JOIN team t ON p.id_team = t.id
+        ORDER BY p.id
+        LIMIT ? OFFSET ?
+    """;
+
+        int offset = page * size;
+        List<Player> players = new ArrayList<>();
+
+        try (Connection connection = dbConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+
+            stmt.setInt(1, size);
+            stmt.setInt(2, offset);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+
+                    Team team = null;
+                    if (rs.getObject("team_id") != null) {
+                        team = new Team(
+                                rs.getInt("team_id"),
+                                rs.getString("team_name"),
+                                ContinentEnum.valueOf(rs.getString("continent"))
+                        );
+                    }
+
+                    players.add(new Player(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("age"),
+                            PlayerPositionEnum.valueOf(rs.getString("position")),
+                            team
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                     "Erreur" + e);
+        }
+
+        return players;
     }
+
 
     public List<Player> createPlayers(List<Player> newPlayers) {
         throw new UnsupportedOperationException("Not supported yet.");

@@ -47,17 +47,13 @@ public class Team {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Team team = (Team) o;
-        return id == team.id &&
-                Objects.equals(name, team.name) &&
-                continent == team.continent &&
-                Objects.equals(players, team.players);
+        if (!(o instanceof Team team)) return false;
+        return id == team.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, continent, players);
+        return Objects.hash(id);
     }
 
     @Override

@@ -88,28 +88,43 @@ public class DataRetriever {
         }
     }
 
-    public Team saveTeam(Team team) {
+    public Team saveTeam(Team teamToSave) {
 
-        String sql = "INSERT INTO team(name, continent) VALUES (?, ?)";
+        if (teamToSave == null) {
+            return null;
+        }
+
+        String query = """
+        INSERT INTO team (name, continent)
+        VALUES (?, ?::continent_enum)
+    """;
 
         try (Connection conn = dbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(
+                     query, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, team.getName());
-            ps.setString(2, team.getContinent().name());
-            ps.executeUpdate();
+            stmt.setString(1, teamToSave.getName());
+            stmt.setString(2, teamToSave.getContinent().name());
 
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                return new Team(rs.getInt(1), team.getName(), team.getContinent());
+            stmt.executeUpdate();
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return new Team(
+                            rs.getInt(1),
+                            teamToSave.getName(),
+                            teamToSave.getContinent()
+                    );
+                }
             }
 
-            return null;
+            throw new RuntimeException("Impossible de récupérer l'id de l'équipe");
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erreur lors de la création de l'équipe", e);
         }
     }
+
 
     public List<Player> findPlayers(int page, int size) {
 

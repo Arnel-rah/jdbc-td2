@@ -76,8 +76,7 @@ public class DataRetriever {
         int offset = page * size;
         List<Player> players = new ArrayList<>();
 
-        try (Connection connection = dbConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(query)) {
+        try (Connection connection = dbConnection.getConnection(); PreparedStatement stmt = connection.prepareStatement(query)) {
 
             stmt.setInt(1, size);
             stmt.setInt(2, offset);
@@ -106,12 +105,11 @@ public class DataRetriever {
 
         } catch (SQLException e) {
             throw new RuntimeException(
-                     "Erreur" + e);
+                    "Erreur" + e);
         }
 
         return players;
     }
-
 
     public List<Player> createPlayers(List<Player> newPlayers) {
         if (newPlayers == null || newPlayers.isEmpty()) {
@@ -125,9 +123,8 @@ public class DataRetriever {
 
         List<Player> createdPlayers = new ArrayList<>();
 
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     query, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(
+                query, Statement.RETURN_GENERATED_KEYS)) {
 
             conn.setAutoCommit(false);
 
@@ -173,56 +170,86 @@ public class DataRetriever {
         }
     }
 
+    public Team saveTeam(Team teamToSave) {
+        if (teamToSave == null) {
+            return null;
+        }
 
-   public Team saveTeam(Team teamToSave) {
-    if (teamToSave == null) {
-        return null;
-    }
-
-    String query = """
+        String query = """
         INSERT INTO team (name, continent)
         VALUES (?, ?)
     """;
 
-    try (Connection conn = dbConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(
-                 query, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(
+                query, Statement.RETURN_GENERATED_KEYS)) {
 
-        stmt.setString(1, teamToSave.getName());
-        stmt.setString(2, teamToSave.getContinent().name());
+            stmt.setString(1, teamToSave.getName());
+            stmt.setString(2, teamToSave.getContinent().name());
 
-        stmt.executeUpdate();
+            stmt.executeUpdate();
 
-        try (ResultSet rs = stmt.getGeneratedKeys()) {
-            if (rs.next()) {
-                return new Team(
-                        rs.getInt(1),
-                        teamToSave.getName(),
-                        teamToSave.getContinent()
-                );
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return new Team(
+                            rs.getInt(1),
+                            teamToSave.getName(),
+                            teamToSave.getContinent()
+                    );
+                }
             }
+
+            throw new RuntimeException("Impossible de récupérer l'id de l'equipe créer");
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Erreur  : " + teamToSave.getName(), e
+            );
         }
-
-        throw new RuntimeException("Impossible de récupérer l'id de l'equipe créer");
-
-    } catch (SQLException e) {
-        throw new RuntimeException(
-                "Erreur  : " + teamToSave.getName(), e
-        );
     }
-}
-
 
     public List<Team> findTeamsByPlayerName(String playerName) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (playerName == null || playerName.isBlank()) {
+            return List.of();
+        }
+
+        String query = """
+        SELECT DISTINCT t.id, t.name, t.continent
+        FROM team t
+        JOIN player p ON p.id_team = t.id
+        WHERE p.name ILIKE ?
+    """;
+
+        List<Team> teams = new ArrayList<>();
+
+        try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, "%" + playerName + "%");
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    teams.add(new Team(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            ContinentEnum.valueOf(rs.getString("continent"))
+                    ));
+                }
+            }
+
+            return teams;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Erreur : " + playerName, e
+            );
+        }
     }
 
     public List<Player> findPlayersByCriteria(String playerName,
-                                              PlayerPositionEnum position,
-                                              String teamName,
-                                              ContinentEnum continent,
-                                              int page,
-                                              int size) {
+            PlayerPositionEnum position,
+            String teamName,
+            ContinentEnum continent,
+            int page,
+            int size) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

@@ -54,9 +54,14 @@ public class DataRetriever {
         }
     }
 
+
     public List<Player> createPlayers(List<Player> players) {
 
-        String sql = "INSERT INTO player(name, age, position, id_team) VALUES (?, ?, ?, ?)";
+        String sql = """
+            INSERT INTO player(name, age, position, id_team)
+            VALUES (?, ?, ?::position_enum, ?)
+        """;
+
         List<Player> result = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
@@ -67,6 +72,7 @@ public class DataRetriever {
                 ps.setInt(2, p.getAge());
                 ps.setString(3, p.getPosition().name());
                 ps.setInt(4, p.getTeam().getId());
+
                 ps.executeUpdate();
 
                 ResultSet rs = ps.getGeneratedKeys();
@@ -90,22 +96,18 @@ public class DataRetriever {
 
     public Team saveTeam(Team teamToSave) {
 
-        if (teamToSave == null) {
-            return null;
-        }
+        if (teamToSave == null) return null;
 
         String query = """
-        INSERT INTO team (name, continent)
-        VALUES (?, ?::continent_enum)
-    """;
+            INSERT INTO team (name, continent)
+            VALUES (?, ?::continent_enum)
+        """;
 
         try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     query, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, teamToSave.getName());
             stmt.setString(2, teamToSave.getContinent().name());
-
             stmt.executeUpdate();
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
@@ -125,20 +127,18 @@ public class DataRetriever {
         }
     }
 
-
     public List<Player> findPlayers(int page, int size) {
 
         String sql = """
-        SELECT p.id, p.name, p.age, p.position,
-               t.id AS team_id, t.name AS team_name, t.continent
-        FROM player p
-        LEFT JOIN team t ON p.id_team = t.id
-        ORDER BY p.id
-        LIMIT ? OFFSET ?
-    """;
+            SELECT p.id, p.name, p.age, p.position,
+                   t.id AS team_id, t.name AS team_name, t.continent
+            FROM player p
+            LEFT JOIN team t ON p.id_team = t.id
+            ORDER BY p.id
+            LIMIT ? OFFSET ?
+        """;
 
         int offset = page * size;
-        List<Player> players = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -146,24 +146,23 @@ public class DataRetriever {
             ps.setInt(1, size);
             ps.setInt(2, offset);
 
-            return getPlayers(players, ps);
+            return getPlayers(new ArrayList<>(), ps);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
     public List<Team> findTeamsByPlayerName(String playerName) {
 
-        if (playerName == null || playerName.isBlank()) {
-            return List.of();
-        }
+        if (playerName == null || playerName.isBlank()) return List.of();
 
         String sql = """
-        SELECT DISTINCT t.id, t.name, t.continent
-        FROM team t
-        JOIN player p ON p.id_team = t.id
-        WHERE p.name ILIKE ?
-    """;
+            SELECT DISTINCT t.id, t.name, t.continent
+            FROM team t
+            JOIN player p ON p.id_team = t.id
+            WHERE p.name ILIKE ?
+        """;
 
         List<Team> teams = new ArrayList<>();
 
@@ -171,7 +170,6 @@ public class DataRetriever {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, "%" + playerName + "%");
-
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -188,6 +186,7 @@ public class DataRetriever {
             throw new RuntimeException(e);
         }
     }
+
     public List<Player> findPlayersByCriteria(
             String playerName,
             PlayerPositionEnum position,
@@ -197,12 +196,12 @@ public class DataRetriever {
             int size) {
 
         StringBuilder sql = new StringBuilder("""
-        SELECT p.id, p.name, p.age, p.position,
-               t.id AS team_id, t.name AS team_name, t.continent
-        FROM player p
-        LEFT JOIN team t ON p.id_team = t.id
-        WHERE 1=1
-    """);
+            SELECT p.id, p.name, p.age, p.position,
+                   t.id AS team_id, t.name AS team_name, t.continent
+            FROM player p
+            LEFT JOIN team t ON p.id_team = t.id
+            WHERE 1=1
+        """);
 
         List<Object> params = new ArrayList<>();
 
@@ -212,7 +211,7 @@ public class DataRetriever {
         }
 
         if (position != null) {
-            sql.append(" AND p.position = ?");
+            sql.append(" AND p.position = ?::position_enum");
             params.add(position.name());
         }
 
@@ -222,15 +221,13 @@ public class DataRetriever {
         }
 
         if (continent != null) {
-            sql.append(" AND t.continent = ?");
+            sql.append(" AND t.continent = ?::continent_enum");
             params.add(continent.name());
         }
 
         sql.append(" ORDER BY p.id LIMIT ? OFFSET ?");
         params.add(size);
         params.add(page * size);
-
-        List<Player> players = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -239,7 +236,7 @@ public class DataRetriever {
                 ps.setObject(i + 1, params.get(i));
             }
 
-            return getPlayers(players, ps);
+            return getPlayers(new ArrayList<>(), ps);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -247,6 +244,7 @@ public class DataRetriever {
     }
 
     private List<Player> getPlayers(List<Player> players, PreparedStatement ps) throws SQLException {
+
         ResultSet rs = ps.executeQuery();
 
         while (rs.next()) {
@@ -260,18 +258,15 @@ public class DataRetriever {
                 );
             }
 
-            Player player = new Player(
+            players.add(new Player(
                     rs.getInt("id"),
                     rs.getString("name"),
                     rs.getInt("age"),
                     PlayerPositionEnum.valueOf(rs.getString("position")),
                     team
-            );
-
-            players.add(player);
+            ));
         }
 
         return players;
     }
-
 }

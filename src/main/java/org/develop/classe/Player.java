@@ -10,7 +10,7 @@ public class Player {
     private final PlayerPositionEnum position;
     private final Team team;
 
-    public Player(int id, String name, int age, PlayerPositionEnum position, Team team) {
+    public Player(Integer id, String name, int age, PlayerPositionEnum position, Team team) {
         this.id = id;
         this.name = name;
         this.age = age;

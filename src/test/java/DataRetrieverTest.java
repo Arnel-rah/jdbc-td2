@@ -1,9 +1,4 @@
-
-import org.develop.classe.ContinentEnum;
-import org.develop.classe.DataRetriever;
-import org.develop.classe.Player;
-import org.develop.classe.PlayerPositionEnum;
-import org.develop.classe.Team;
+import org.develop.classe.*;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
@@ -19,84 +14,126 @@ class DataRetrieverTest {
         dataRetriever = new DataRetriever();
     }
 
+    // a) id = 1 → Real Madrid avec 3 joueurs
     @Test
-    void testFindTeamById_ok() {
+    void testFindTeamById_realMadrid() {
         Team team = dataRetriever.findTeamById(1);
 
         assertNotNull(team);
-        assertEquals(1, team.getId());
-        assertNotNull(team.getName());
-        assertTrue(team.getPlayerCount() >= 0);
+        assertEquals("Real Madrid CF", team.getName());
+        assertEquals(3, team.getPlayers().size());
     }
 
+    // b) id = 5 → Inter Miami avec liste vide
     @Test
-    void testFindTeamById_null() {
-        Team team = dataRetriever.findTeamById(null);
-        assertNull(team);
-    }
+    void testFindTeamById_interMiamiNoPlayers() {
+        Team team = dataRetriever.findTeamById(5);
 
-    @Test
-    void testFindPlayers_pagination() {
-        List<Player> players = dataRetriever.findPlayers(0, 5);
-
-        assertNotNull(players);
-        assertTrue(players.size() <= 5);
-    }
-
-    @Test
-    void testSaveTeam() {
-        Team team = new Team(
-                0,
-                "Test JUnit FC",
-                ContinentEnum.EUROPA
-        );
-
-        Team savedTeam = dataRetriever.saveTeam(team);
-
-        assertNotNull(savedTeam);
-        assertTrue(savedTeam.getId() > 0);
-        assertEquals("Test JUnit FC", savedTeam.getName());
-    }
-
-    @Test
-    void testCreatePlayers() {
-        Team team = dataRetriever.findTeamById(1);
         assertNotNull(team);
-
-        Player player = new Player(
-                0,
-                "JUnit Player",
-                22,
-                PlayerPositionEnum.MIDF,
-                team
-        );
-
-        List<Player> created = dataRetriever.createPlayers(List.of(player));
-
-        assertEquals(1, created.size());
-        assertTrue(created.get(0).getId() > 0);
+        assertEquals("Inter Miami", team.getName());
+        assertTrue(team.getPlayers().isEmpty());
     }
 
+    // c) page=1 size=2 → Courtois, Carvajal
+    @Test
+    void testFindPlayers_page1_size2() {
+        List<Player> players = dataRetriever.findPlayers(1, 2);
+
+        assertEquals(2, players.size());
+        assertEquals("Thibaut Courtois", players.get(0).getName());
+        assertEquals("Dani Carvajal", players.get(1).getName());
+    }
+
+    // d) page=3 size=5 → liste vide
+    @Test
+    void testFindPlayers_emptyPage() {
+        List<Player> players = dataRetriever.findPlayers(3, 5);
+
+        assertTrue(players.isEmpty());
+    }
+
+    // e) playerName="an" → Real Madrid, Atletico Madrid
     @Test
     void testFindTeamsByPlayerName() {
-        List<Team> teams = dataRetriever.findTeamsByPlayerName("Jude");
+        List<Team> teams = dataRetriever.findTeamsByPlayerName("an");
 
-        assertNotNull(teams);
-        assertFalse(teams.isEmpty());
+        assertEquals(2, teams.size());
+
+        List<String> names = teams.stream()
+                .map(Team::getName)
+                .toList();
+
+        assertTrue(names.contains("Real Madrid CF"));
+        assertTrue(names.contains("Atletico Madrid"));
     }
 
+    // f) critères complexes → Jude Bellingham
     @Test
     void testFindPlayersByCriteria() {
         List<Player> players = dataRetriever.findPlayersByCriteria(
-                "Jude",
+                "ud",
                 PlayerPositionEnum.MIDF,
-                null,
-                null,
-                0,
+                "Madrid",
+                ContinentEnum.EUROPA,
+                1,
                 10
         );
 
-        assertNotNull(players);
-        assertFalse(players.isEmpty());
+        assertEquals(1, players.size());
+        assertEquals("Jude Bellingham", players.get(0).getName());
+    }
+
+    // g) createPlayers → exception (Jude + Pedri)
+    @Test
+    void testCreatePlayers_shouldFail() {
+        Player p1 = new Player(null, "Jude Bellingham", 23,
+                PlayerPositionEnum.STR, null);
+        Player p2 = new Player(null, "Pedri", 24,
+                PlayerPositionEnum.MIDF, null);
+
+        assertThrows(RuntimeException.class, () ->
+                dataRetriever.createPlayers(List.of(p1, p2))
+        );
+    }
+
+    // h) createPlayers → succès (Vini + Pedri)
+    @Test
+    void testCreatePlayers_success() {
+        Player p1 = new Player(null, "Vini", 25,
+                PlayerPositionEnum.STR, null);
+        Player p2 = new Player(null, "Pedri", 24,
+                PlayerPositionEnum.MIDF, null);
+
+        List<Player> players = dataRetriever.createPlayers(List.of(p1, p2));
+
+        assertEquals(2, players.size());
+        assertNotNull(players.get(0).getId());
+        assertNotNull(players.get(1).getId());
+    }
+
+    // i) saveTeam id=1 → ajouter un joueur sans supprimer les anciens
+    @Test
+    void testSaveTeam_addPlayer() {
+        Team team = dataRetriever.findTeamById(1);
+        int initialCount = team.getPlayers().size();
+
+        Player vini = new Player(null, "Vini", 25,
+                PlayerPositionEnum.STR, team);
+
+        team.addPlayer(vini);
+        Team updatedTeam = dataRetriever.saveTeam(team);
+
+        assertEquals(initialCount + 1, updatedTeam.getPlayers().size());
+    }
+
+    // j) saveTeam id=2 → supprimer tous les joueurs
+    @Test
+    void testSaveTeam_removeAllPlayers() {
+        Team team = dataRetriever.findTeamById(2);
+
+        team.getPlayers().clear();
+        Team updatedTeam = dataRetriever.saveTeam(team);
+
+        assertTrue(updatedTeam.getPlayers().isEmpty());
     }
 }

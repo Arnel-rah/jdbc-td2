@@ -8,6 +8,8 @@ public class DataRetriever {
 
     private final DBConnection dbConnection = new DBConnection();
 
+    /* ===================== findTeamById ===================== */
+
     public Team findTeamById(Integer id) {
         if (id == null) return null;
 
@@ -21,7 +23,6 @@ public class DataRetriever {
             try (PreparedStatement ps = conn.prepareStatement(teamSql)) {
                 ps.setInt(1, id);
                 ResultSet rs = ps.executeQuery();
-
                 if (!rs.next()) return null;
 
                 team = new Team(
@@ -36,14 +37,13 @@ public class DataRetriever {
                 ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
-                    Player player = new Player(
+                    team.addPlayer(new Player(
                             rs.getInt("id"),
                             rs.getString("name"),
                             rs.getInt("age"),
                             PlayerPositionEnum.valueOf(rs.getString("position")),
                             team
-                    );
-                    team.addPlayer(player);
+                    ));
                 }
             }
 
@@ -54,78 +54,7 @@ public class DataRetriever {
         }
     }
 
-
-    public List<Player> createPlayers(List<Player> players) {
-
-        String sql = """
-            INSERT INTO player(name, age, position, id_team)
-            VALUES (?, ?, ?::position_enum, ?)
-        """;
-
-        List<Player> result = new ArrayList<>();
-
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            for (Player p : players) {
-                ps.setString(1, p.getName());
-                ps.setInt(2, p.getAge());
-                ps.setString(3, p.getPosition().name());
-                ps.setInt(4, p.getTeam().getId());
-
-                ps.executeUpdate();
-
-                ResultSet rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    result.add(new Player(
-                            rs.getInt(1),
-                            p.getName(),
-                            p.getAge(),
-                            p.getPosition(),
-                            p.getTeam()
-                    ));
-                }
-            }
-
-            return result;
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Team saveTeam(Team teamToSave) {
-
-        if (teamToSave == null) return null;
-
-        String query = """
-            INSERT INTO team (name, continent)
-            VALUES (?, ?::continent_enum)
-        """;
-
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
-            stmt.setString(1, teamToSave.getName());
-            stmt.setString(2, teamToSave.getContinent().name());
-            stmt.executeUpdate();
-
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return new Team(
-                            rs.getInt(1),
-                            teamToSave.getName(),
-                            teamToSave.getContinent()
-                    );
-                }
-            }
-
-            throw new RuntimeException("Impossible de récupérer l'id de l'équipe");
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création de l'équipe", e);
-        }
-    }
+    /* ===================== findPlayers ===================== */
 
     public List<Player> findPlayers(int page, int size) {
 
@@ -138,20 +67,41 @@ public class DataRetriever {
             LIMIT ? OFFSET ?
         """;
 
-        int offset = page * size;
+        int offset = (page - 1) * size;
+        List<Player> players = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, size);
             ps.setInt(2, offset);
+            ResultSet rs = ps.executeQuery();
 
-            return getPlayers(new ArrayList<>(), ps);
+            while (rs.next()) {
+                Team team = rs.getObject("team_id") == null ? null :
+                        new Team(
+                                rs.getInt("team_id"),
+                                rs.getString("team_name"),
+                                ContinentEnum.valueOf(rs.getString("continent"))
+                        );
+
+                players.add(new Player(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getInt("age"),
+                        PlayerPositionEnum.valueOf(rs.getString("position")),
+                        team
+                ));
+            }
+
+            return players;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
+    /* ===================== findTeamsByPlayerName ===================== */
 
     public List<Team> findTeamsByPlayerName(String playerName) {
 
@@ -187,6 +137,8 @@ public class DataRetriever {
         }
     }
 
+    /* ===================== findPlayersByCriteria ===================== */
+
     public List<Player> findPlayersByCriteria(
             String playerName,
             PlayerPositionEnum position,
@@ -205,7 +157,7 @@ public class DataRetriever {
 
         List<Object> params = new ArrayList<>();
 
-        if (playerName != null && !playerName.isBlank()) {
+        if (playerName != null) {
             sql.append(" AND p.name ILIKE ?");
             params.add("%" + playerName + "%");
         }
@@ -215,7 +167,7 @@ public class DataRetriever {
             params.add(position.name());
         }
 
-        if (teamName != null && !teamName.isBlank()) {
+        if (teamName != null) {
             sql.append(" AND t.name ILIKE ?");
             params.add("%" + teamName + "%");
         }
@@ -227,7 +179,9 @@ public class DataRetriever {
 
         sql.append(" ORDER BY p.id LIMIT ? OFFSET ?");
         params.add(size);
-        params.add(page * size);
+        params.add((page - 1) * size);
+
+        List<Player> players = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -236,37 +190,29 @@ public class DataRetriever {
                 ps.setObject(i + 1, params.get(i));
             }
 
-            return getPlayers(new ArrayList<>(), ps);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Team team = rs.getObject("team_id") == null ? null :
+                        new Team(
+                                rs.getInt("team_id"),
+                                rs.getString("team_name"),
+                                ContinentEnum.valueOf(rs.getString("continent"))
+                        );
+
+                players.add(new Player(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getInt("age"),
+                        PlayerPositionEnum.valueOf(rs.getString("position")),
+                        team
+                ));
+            }
+
+            return players;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private List<Player> getPlayers(List<Player> players, PreparedStatement ps) throws SQLException {
-
-        ResultSet rs = ps.executeQuery();
-
-        while (rs.next()) {
-
-            Team team = null;
-            if (rs.getObject("team_id") != null) {
-                team = new Team(
-                        rs.getInt("team_id"),
-                        rs.getString("team_name"),
-                        ContinentEnum.valueOf(rs.getString("continent"))
-                );
-            }
-
-            players.add(new Player(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getInt("age"),
-                    PlayerPositionEnum.valueOf(rs.getString("position")),
-                    team
-            ));
-        }
-
-        return players;
     }
 }

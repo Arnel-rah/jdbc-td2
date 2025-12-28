@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class Player {
 
-    private final int id;
+    private final Integer id;
     private final String name;
     private final int age;
     private final PlayerPositionEnum position;

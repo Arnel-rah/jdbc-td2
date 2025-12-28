@@ -7,12 +7,12 @@ import java.util.Objects;
 
 public class Team {
 
-    private final int id;
+    private final Integer id;
     private final String name;
     private final ContinentEnum continent;
     private final List<Player> players = new ArrayList<>();
 
-    public Team(int id, String name, ContinentEnum continent) {
+    public Team(Integer id, String name, ContinentEnum continent) {
         this.id = id;
         this.name = name;
         this.continent = continent;

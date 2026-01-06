@@ -10,7 +10,7 @@ public class Team {
     private final Integer id;
     private final String name;
     private final ContinentEnum continent;
-    private final List<Player> players = new ArrayList<>();
+    private List<Player> players = new ArrayList<>();
 
     public Team(Integer id, String name, ContinentEnum continent) {
         this.id = id;
@@ -42,6 +42,10 @@ public class Team {
 
     public Integer getPlayerCount() {
         return players.size();
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = (players != null) ? players : new ArrayList<>();
     }
 
     @Override

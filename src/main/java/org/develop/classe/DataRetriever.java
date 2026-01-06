@@ -11,21 +11,24 @@ public class DataRetriever {
         if (id == null) return null;
         try (Connection conn = dbConnection.getConnection()) {
             Team team = null;
-            String sqlT = "SELECT * FROM team WHERE id = ?";
+            String sqlT = "SELECT id, name, continent FROM team WHERE id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlT)) {
                 ps.setInt(1, id);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
-                    team = new Team(rs.getInt("id"), rs.getString("name"), ContinentEnum.valueOf(rs.getString("continent")));
+                    team = new Team(rs.getInt("id"), rs.getString("name"),
+                            ContinentEnum.valueOf(rs.getString("continent")));
                 }
             }
             if (team == null) return null;
-            String sqlP = "SELECT * FROM player WHERE id_team = ?";
+            String sqlP = "SELECT id, name, age, position FROM player WHERE id_team = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlP)) {
                 ps.setInt(1, id);
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
-                    team.addPlayer(new Player(rs.getInt("id"), rs.getString("name"), rs.getInt("age"), PlayerPositionEnum.valueOf(rs.getString("position")), team));
+                    team.addPlayer(new Player(rs.getInt("id"),
+                            rs.getString("name"), rs.getInt("age"),
+                            PlayerPositionEnum.valueOf(rs.getString("position")), team));
                 }
             }
             return team;
@@ -33,7 +36,8 @@ public class DataRetriever {
     }
 
     public List<Player> findPlayers(int page, int size) {
-        String sql = "SELECT p.*, t.name as team_name, t.continent FROM player p LEFT JOIN team t ON p.id_team = t.id ORDER BY p.id LIMIT ? OFFSET ?";
+        String sql = "SELECT p.id, p.name, p.age, p.position, p.id_team, t.name as team_name, t.continent " +
+                "FROM player p LEFT JOIN team t ON p.id_team = t.id ORDER BY p.id LIMIT ? OFFSET ?";
         try (Connection conn = dbConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, size);
             ps.setInt(2, (page - 1) * size);
@@ -43,7 +47,7 @@ public class DataRetriever {
 
     public List<Team> findTeamsByPlayerName(String name) {
         if (name == null || name.isBlank()) return List.of();
-        String sql = "SELECT DISTINCT t.* FROM team t JOIN player p ON p.id_team = t.id WHERE p.name ILIKE ?";
+        String sql = "SELECT DISTINCT t.id, t.name, t.continent FROM team t JOIN player p ON p.id_team = t.id WHERE p.name ILIKE ?";
         try (Connection conn = dbConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, "%" + name + "%");
             ResultSet rs = ps.executeQuery();
@@ -57,7 +61,9 @@ public class DataRetriever {
     }
 
     public List<Player> findPlayersByCriteria(String name, PlayerPositionEnum pos, String tName, ContinentEnum cont, int p, int s) {
-        StringBuilder sql = new StringBuilder("SELECT p.*, t.id as team_id, t.name as team_name, t.continent FROM player p LEFT JOIN team t ON p.id_team = t.id WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT p.id, p.name, p.age, p.position," +
+                "p.id_team, t.name as team_name," +
+                "t.continent FROM player p LEFT JOIN team t ON p.id_team = t.id WHERE 1=1");
         List<Object> params = new ArrayList<>();
         if (name != null) { sql.append(" AND p.name ILIKE ?");
             params.add("%"+name+"%"); }
@@ -68,9 +74,11 @@ public class DataRetriever {
         if (cont != null) { sql.append(" AND t.continent = ?::continent_enum");
             params.add(cont.name()); }
         sql.append(" ORDER BY p.id LIMIT ? OFFSET ?");
-        params.add(s); params.add((p - 1) * s);
+        params.add(s);
+        params.add((p - 1) * s);
         try (Connection conn = dbConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1,
+                    params.get(i));
             return getPlayers(new ArrayList<>(), ps);
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
@@ -111,9 +119,21 @@ public class DataRetriever {
     private List<Player> getPlayers(List<Player> list, PreparedStatement ps) throws SQLException {
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
-            Team t = rs.getObject("team_id") == null && rs.getObject("id_team") == null ? null :
-                    new Team(rs.getInt(rs.getObject("team_id") != null ? "team_id" : "id_team"), rs.getString("team_name"), ContinentEnum.valueOf(rs.getString("continent")));
-            list.add(new Player(rs.getInt("id"), rs.getString("name"), rs.getInt("age"), PlayerPositionEnum.valueOf(rs.getString("position")), t));
+            Team t = null;
+            if (rs.getObject("id_team") != null) {
+                t = new Team(
+                        rs.getInt("id_team"),
+                        rs.getString("team_name"),
+                        ContinentEnum.valueOf(rs.getString("continent"))
+                );
+            }
+            list.add(new Player(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("age"),
+                    PlayerPositionEnum.valueOf(rs.getString("position")),
+                    t
+            ));
         }
         return list;
     }

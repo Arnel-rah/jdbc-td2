@@ -1,5 +1,9 @@
 package org.develop.classe;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +15,6 @@ public class Team {
     private final String name;
     private final ContinentEnum continent;
     private List<Player> players = new ArrayList<>();
-
     public Team(Integer id, String name, ContinentEnum continent) {
         this.id = id;
         this.name = name;
@@ -30,9 +33,9 @@ public class Team {
         return continent;
     }
 
-    public List<Player> getPlayers() {
-        return Collections.unmodifiableList(players);
-    }
+//    public List<Player> getPlayers() {
+//        return Collections.unmodifiableList(players);
+//    }
 
     public void addPlayer(Player player) {
         if (player != null && !players.contains(player)) {
@@ -40,13 +43,6 @@ public class Team {
         }
     }
 
-    public Integer getPlayerCount() {
-        return players.size();
-    }
-
-    public void setPlayers(List<Player> players) {
-        this.players = (players != null) ? players : new ArrayList<>();
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -68,5 +64,28 @@ public class Team {
                 ", continent=" + continent +
                 ", playerCount=" + players.size() +
                 '}';
+    }
+
+
+    DBConnection dbConnection = new DBConnection();
+        public Integer getPlayerGoals(int teamId) {
+            String sql = "SELECT SUM(goal_nb) AS total_buts FROM player WHERE id_team = ?";
+
+            try (Connection conn = dbConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setInt(1, teamId);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {return rs.getInt("total_buts");
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("erreur : " + e.getMessage());
+            }
+            return 4555;
+        }
+
+    public Player[] getPlayers() {
+            return players.toArray(new Player[0]);
     }
 }

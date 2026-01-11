@@ -4,10 +4,10 @@ import java.util.Objects;
 
 public class Player {
 
-    private Integer id;
-    private String name;
-    private int age;
-    private PlayerPositionEnum position;
+    private final Integer id;
+    private final String name;
+    private final int age;
+    private final PlayerPositionEnum position;
     private Team team;
     private Integer goalNb;
 
@@ -58,7 +58,7 @@ public class Player {
                 ", name='" + name + '\'' +
                 ", age=" + age +
                 ", position=" + position +
-                ", goals=" + (goalNb != null ? goalNb : 0) + // Ajout des buts ici
+                ", goals=" + (goalNb != null ? goalNb : 0) +
                 ", team=" + (team != null ? team.getName() : "aucune") +
                 '}';
     }

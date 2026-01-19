@@ -1,7 +1,9 @@
+
 import java.util.List;
 import java.util.Objects;
 
 public class Dish {
+
     private Integer id;
     private Double sellingPrice;
     private String name;
@@ -17,18 +19,12 @@ public class Dish {
     }
 
     public Double getDishCost() {
-        if (ingredients == null) {
+        if (ingredients == null || ingredients.isEmpty()) {
             return 0.0;
         }
-        Double total = 0.0;
-        for (Ingredient ingredient : ingredients) {
-            Double quantity = ingredient.getQuantity();
-            if (quantity == null) {
-                throw new RuntimeException("Ingredient quantity is null for ingredient id " + ingredient.getId());
-            }
-            total += ingredient.getPrice()* quantity;
-        }
-        return total;
+        return ingredients.stream()
+                .mapToDouble(ing -> ing.getPrice() * ing.getQuantity())
+                .sum();
     }
 
     public Dish() {
@@ -41,7 +37,6 @@ public class Dish {
         this.ingredients = ingredients;
         this.sellingPrice = sellingPrice;
     }
-
 
     public Integer getId() {
         return id;
@@ -84,7 +79,9 @@ public class Dish {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Dish dish = (Dish) o;
         return Objects.equals(id, dish.id) && Objects.equals(name, dish.name) && dishType == dish.dishType && Objects.equals(ingredients, dish.ingredients);
     }
@@ -96,13 +93,13 @@ public class Dish {
 
     @Override
     public String toString() {
-        return "Dish{" +
-                "id=" + id +
-                ", price=" + sellingPrice +
-                ", name='" + name + '\'' +
-                ", dishType=" + dishType +
-                ", ingredients=" + ingredients +
-                '}';
+        return "Dish{"
+                + "id=" + id
+                + ", price=" + sellingPrice
+                + ", name='" + name + '\''
+                + ", dishType=" + dishType
+                + ", ingredients=" + ingredients
+                + '}';
     }
 
     public Double getGrossMargin() {

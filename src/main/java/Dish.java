@@ -3,39 +3,43 @@ import java.util.Objects;
 
 public class Dish {
     private Integer id;
-    private Double price;
+    private Double sellingPrice;
     private String name;
     private DishTypeEnum dishType;
     private List<Ingredient> ingredients;
 
-    public Double getPrice() {
-        return price;
+    public Double getSellingPrice() {
+        return sellingPrice;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setSellingPrice(Double sellingPrice) {
+        this.sellingPrice = sellingPrice;
     }
 
     public Double getDishCost() {
-        double totalPrice = 0;
-        for (int i = 0; i < ingredients.size(); i++) {
-            Double quantity = ingredients.get(i).getQuantity();
-            if(quantity == null) {
-                throw new RuntimeException("...");
-            }
-            totalPrice = totalPrice + ingredients.get(i).getPrice() * quantity;
+        if (ingredients == null) {
+            return 0.0;
         }
-        return totalPrice;
+        Double total = 0.0;
+        for (Ingredient ingredient : ingredients) {
+            Double quantity = ingredient.getQuantity();
+            if (quantity == null) {
+                throw new RuntimeException("Ingredient quantity is null for ingredient id " + ingredient.getId());
+            }
+            total += ingredient.getPrice()* quantity;
+        }
+        return total;
     }
 
     public Dish() {
     }
 
-    public Dish(Integer id, String name, DishTypeEnum dishType, List<Ingredient> ingredients) {
+    public Dish(Integer id, String name, DishTypeEnum dishType, List<Ingredient> ingredients, Double sellingPrice) {
         this.id = id;
         this.name = name;
         this.dishType = dishType;
         this.ingredients = ingredients;
+        this.sellingPrice = sellingPrice;
     }
 
 
@@ -94,7 +98,7 @@ public class Dish {
     public String toString() {
         return "Dish{" +
                 "id=" + id +
-                ", price=" + price +
+                ", price=" + sellingPrice +
                 ", name='" + name + '\'' +
                 ", dishType=" + dishType +
                 ", ingredients=" + ingredients +
@@ -102,9 +106,9 @@ public class Dish {
     }
 
     public Double getGrossMargin() {
-        if (price == null) {
-            throw new RuntimeException("Price is null");
+        if (this.sellingPrice == null) {
+            throw new RuntimeException("Exception (prix NULL)");
         }
-        return price - getDishCost();
+        return this.sellingPrice - getDishCost();
     }
 }

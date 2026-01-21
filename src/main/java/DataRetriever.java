@@ -153,5 +153,7 @@ public class DataRetriever {
         } catch (SQLException e) {
             throw new RuntimeException("Error generating next ID for " + tableName, e);
         }
+
+       
     }
 }

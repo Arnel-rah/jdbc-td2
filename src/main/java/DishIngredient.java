@@ -20,4 +20,12 @@ public class DishIngredient {
     public void setQuantityRequired(Double quantityRequired) {
         this.quantityRequired = quantityRequired;
     }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
 }

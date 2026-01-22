@@ -1,6 +1,7 @@
 CREATE TYPE dish_type AS ENUM ('STARTER', 'MAIN', 'DESSERT'); -- 
 CREATE TYPE ingredient_category AS ENUM ('VEGETABLE', 'MEAT', 'FRUIT', 'DAIRY', 'OTHER'); 
 CREATE TYPE unit_type AS ENUM ('PCS', 'KG', 'L');
+CREATE TYPE movement_type AS ENUM ('IN', 'OUT');
 
 CREATE TABLE dish (
     id SERIAL PRIMARY KEY,
@@ -24,3 +25,29 @@ CREATE TABLE DishIngredient (
     quantity_required NUMERIC(10, 2) NOT NULL,
     unit unit_type NOT NULL 
 );
+
+CREATE TABLE IF NOT EXISTS stock_movement (
+    id SERIAL PRIMARY KEY,
+    id_ingredient INT REFERENCES ingredient(id),
+    quantity NUMERIC(10, 2) NOT NULL,
+    "type" movement_type NOT NULL,
+    unit unit_type NOT NULL,
+    creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+DROP TABLE stock_movement;
+
+INSERT INTO stock_movement (id_ingredient, quantity, "type", unit, creation_datetime) VALUES
+
+(1,0.2,'OUT','KG','2024-01-06 12:00'),
+(2,4.0, 'IN', 'KG', '2024-01-05 08:00'),
+(2,0.15, 'OUT', 'KG', '2024-01-06 12:00'),
+(3,10.0, 'IN', 'KG', '2024-01-04 09:00'),
+(3,1.0,'OUT','KG', '2024-01-06 13:00'),
+(4,3.0, 'IN', 'KG', '2024-01-05 10:00'),
+(4,0.3, 'OUT', 'KG', '2024-01-06 14:00'),
+(5,2.5, 'IN', 'KG', '2024-01-05 10:00'),
+(5,0.2, 'OUT', 'KG', '2024-01-06 14:00')
+;
+

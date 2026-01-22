@@ -45,7 +45,8 @@ public class DataRetriever {
         """;
 
         DBConnection dbConnection = new DBConnection();
-        try (Connection connection = dbConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dbConnection.getConnection();
+        PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, idDish);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -107,10 +108,10 @@ public class DataRetriever {
                 return findDishById(dishId);
             } catch (SQLException e) {
                 conn.rollback();
-                throw new RuntimeException("Transaction failed. Changes rolled back.", e);
+                throw new RuntimeException("transaction failed ", e);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Connection error during save operation", e);
+            throw new RuntimeException("connection error ", e);
         }
     }
 
@@ -135,7 +136,7 @@ public class DataRetriever {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update junction table DishIngredient", e);
+            throw new RuntimeException("failed to update table", e);
         }
     }
 

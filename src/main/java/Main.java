@@ -2,7 +2,7 @@ public class Main {
     public static void main(String[] args) {
         DataRetriever dr = new DataRetriever();
 
-        // System.out.println(dr.findDishIngredientsByDishId(1));
+        System.out.println(dr.findDishIngredientsByDishId(1));
 
         Dish d1 = dr.findDishById(1);
         System.out.println(d1.getName() + " " + d1.getGrossMargin());

@@ -166,4 +166,19 @@ public class DataRetriever {
             throw new RuntimeException("Error generating next ID for " + tableName, e);
         }
     }
+
+
+    Order saveOrder(Order orderToSave){
+        String upsertOrderSql = """
+        
+        INSERT INTO order (id, reference, creation_datetime) VALUES
+        
+        
+        """;
+
+    }
+
+    Order findOrderByReference(String reference){
+
+    }
 }

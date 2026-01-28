@@ -35,6 +35,19 @@ CREATE TABLE IF NOT EXISTS stock_movement (
     creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "order"(
+    id SERIAL PRIMARY KEY,
+    reference VARCHAR(255),
+    creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dish_order(
+    id SERIAL PRIMARY KEY,
+    id_order INT REFERENCES "order"(id),
+    id_dish INT REFERENCES dish(id),
+    quantity NUMERIC(10, 1) NOT NULL
+);
+
 
 DROP TABLE stock_movement;
 
@@ -50,4 +63,9 @@ INSERT INTO stock_movement (id_ingredient, quantity, "type", unit, creation_date
 (5,2.5, 'IN', 'KG', '2024-01-05 10:00'),
 (5,0.2, 'OUT', 'KG', '2024-01-06 14:00')
 ;
+
+
+
+
+
 

@@ -2,13 +2,24 @@ CREATE TYPE dish_type AS ENUM ('STARTER', 'MAIN', 'DESSERT'); --
 CREATE TYPE ingredient_category AS ENUM ('VEGETABLE', 'MEAT', 'FRUIT', 'DAIRY', 'OTHER'); 
 CREATE TYPE unit_type AS ENUM ('PCS', 'KG', 'L');
 CREATE TYPE movement_type AS ENUM ('IN', 'OUT');
-
+CREATE TYPE command_type AS ENUM ('EAT_IN', 'TAKE_AWAY');
+CREATE TYPE command_status AS ENUM ('CREATED', 'READY', 'DELIVRED');
 CREATE SEQUENCE order_ref_seq START WITH 1;
+
+DROP SEQUENCE order_ref_seq;
 CREATE TABLE dish (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     dish_type dish_type NOT NULL,
     selling_price NUMERIC(10, 2)
+);
+
+CREATE TABLE IF NOT EXISTS "order"(
+    id SERIAL PRIMARY KEY,
+    reference VARCHAR(255),
+    creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    type_command command_type NOT NULL,
+    "status" command_status NOT NULL
 );
 
 
@@ -36,11 +47,7 @@ CREATE TABLE IF NOT EXISTS stock_movement (
     creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "order"(
-    id SERIAL PRIMARY KEY,
-    reference VARCHAR(255),
-    creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+
 
 CREATE TABLE IF NOT EXISTS dish_order(
     id SERIAL PRIMARY KEY,

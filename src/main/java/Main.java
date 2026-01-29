@@ -20,6 +20,8 @@ public class Main {
         List<DishOrder> lignes = new ArrayList<>();
         lignes.add(ligne);
         commande.setDishOrderList(lignes);
+        commande.setTypeOrder(TypeOrder.EAT_IN);
+        commande.setOrderStatut(StatutEnum.CREATED);
 
         try {
             Order resultat = dr.saveOrder(commande);

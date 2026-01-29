@@ -1,20 +1,32 @@
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Main {
     public static void main(String[] args) {
         DataRetriever dr = new DataRetriever();
 
-        System.out.println(dr.findDishIngredientsByDishId(1));
+        Order commande = new Order();
+        commande.setCreationDatetime(Instant.now());
 
-        Dish d1 = dr.findDishById(1);
-        System.out.println(d1.getName() + " " + d1.getGrossMargin());
+        Dish plat = new Dish();
+        plat.setId(1);
+        plat.setDishIngredients(new ArrayList<>()); 
 
-        Dish d2 = dr.findDishById(2);
-        System.out.println(d2.getName() + " " + d2.getGrossMargin());
+        DishOrder ligne = new DishOrder();
+        ligne.setDish(plat);
+        ligne.setQuantity(1);
 
-        try{
-            Dish d3 = dr.findDishById(3);
-        System.out.println(d3.getName() + " " + d3.getGrossMargin());
-        } catch (RuntimeException e) {
-            System.out.println("RuntimeException" + e.getMessage());
+        List<DishOrder> lignes = new ArrayList<>();
+        lignes.add(ligne);
+        commande.setDishOrderList(lignes);
+
+        try {
+            Order resultat = dr.saveOrder(commande);
+            System.out.println("Nety ianyyyyyy : " + resultat.getReference());
+        } catch (Exception e) {
+            throw new RuntimeException("error sequence" + e);
         }
+
     }
 }

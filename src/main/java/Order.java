@@ -132,6 +132,10 @@ public class Order {
                 + "]";
     }
 
+    void setOrderStatut(String take_away) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 }
 
 /* 

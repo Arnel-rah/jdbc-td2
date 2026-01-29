@@ -202,12 +202,12 @@ public class DataRetriever {
         }
     }
 
-// ===============================================>
+// Annexe  ==>
     Order findOrderByReference(String reference) {
         DBConnection dbConnection = new DBConnection();
         try (Connection connection = dbConnection.getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement("""
-                    select id, reference, creation_datetime from "order" where reference like ?""");
+                    select id, reference, creation_datetime, type_command, status from "order" where reference like ?""");
             preparedStatement.setString(1, reference);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -216,6 +216,8 @@ public class DataRetriever {
                 order.setId(idOrder);
                 order.setReference(resultSet.getString("reference"));
                 order.setCreationDatetime(resultSet.getTimestamp("creation_datetime").toInstant());
+                order.setTypeOrder(TypeOrder.valueOf(resultSet.getString("type_command")));
+                order.setOrderStatut(StatutEnum.valueOf(resultSet.getString("status")));
                 order.setDishOrderList(findDishOrderByIdOrder(idOrder));
                 return order;
             }
@@ -270,6 +272,8 @@ public class DataRetriever {
 
             int orderId = insertOrder(conn, order);
             order.setId(orderId);
+            order.setTypeOrder(order.getTypeOrder());
+            order.setOrderStatut(order.getOrderStatut());
 
             insertDishOrders(conn, orderId, order);
             insertStockOutMovements(conn, order);
@@ -279,15 +283,15 @@ public class DataRetriever {
             return findOrderByReference(reference);
 
         } catch (Exception e) {
-            throw new RuntimeException("failed to save order", e);
+            throw new RuntimeException("Tsy mandeha", e);
         }
     }
 
     // fampidirana commande
     private int insertOrder(Connection conn, Order order) {
         String sql = """
-        INSERT INTO "order" (reference, creation_datetime)
-        VALUES (?, ?)
+    INSERT INTO "order" (reference, creation_datetime, type_command, "status")
+        VALUES (?, ?, ?::command_type, ?::command_status)
         RETURNING id
         """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -297,6 +301,8 @@ public class DataRetriever {
                     ? order.getCreationDatetime()
                     : Instant.now();
             ps.setTimestamp(2, Timestamp.from(creationTime));
+            ps.setString(3, order.getTypeOrder().toString());
+            ps.setString(4, order.getOrderStatut().toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -405,8 +411,7 @@ public class DataRetriever {
     private String generateNextOrderReference(Connection conn) {
         final String sql = "SELECT nextval('order_ref_seq')";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             if (!rs.next()) {
                 throw new RuntimeException("sequence  did not return any value");

@@ -3,8 +3,7 @@ CREATE TYPE ingredient_category AS ENUM ('VEGETABLE', 'MEAT', 'FRUIT', 'DAIRY', 
 CREATE TYPE unit_type AS ENUM ('PCS', 'KG', 'L');
 CREATE TYPE movement_type AS ENUM ('IN', 'OUT');
 
-chore(db): create sequence for order references
-
+CREATE SEQUENCE order_ref_seq START WITH 1;
 CREATE TABLE dish (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,

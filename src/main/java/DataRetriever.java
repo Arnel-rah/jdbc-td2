@@ -1,4 +1,3 @@
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -452,6 +451,62 @@ public class DataRetriever {
                     );
                 }
             }
+        }
+    }
+
+    // Manova commande - VERSION CORRIGÉE
+    public Order updateOrder(Order orderToSave) {
+        if (orderToSave == null || orderToSave.getId() == null) {
+            throw new IllegalArgumentException("Tsy mandeha: ID ou Order null");
+        }
+
+        String ref = orderToSave.getReference();
+        if (ref == null || ref.trim().isEmpty()) {
+            throw new IllegalArgumentException("Order reference must not be null or empty");
+        }
+
+        Order existing = findOrderByReference(ref);
+        if (existing == null) {
+            throw new RuntimeException("Order not found with reference: " + ref);
+        }
+        DBConnection db = new DBConnection();
+        try (Connection conn = db.getConnection()) {
+            conn.setAutoCommit(false);
+
+            String sql = """
+            UPDATE "order"
+               SET type_command = ?::command_type,
+                   "status"     = ?::command_status
+             WHERE reference = ?
+            RETURNING id, reference, creation_datetime, type_command, "status"
+        """;
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, orderToSave.getTypeOrder().name());
+                ps.setString(2, orderToSave.getOrderStatut().name());
+                ps.setString(3, ref);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        Order updated = new Order();
+                        updated.setId(rs.getInt("id"));
+                        updated.setReference(rs.getString("reference"));
+                        updated.setCreationDatetime(rs.getTimestamp("creation_datetime").toInstant());
+                        updated.setTypeOrder(TypeOrder.valueOf(rs.getString("type_command")));
+                        updated.setOrderStatut(StatutEnum.valueOf(rs.getString("status")));
+
+                        conn.commit();
+                        return updated;
+                    } else {
+                        throw new RuntimeException("Order not found during update: " + ref);
+                    }
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Error update", e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error database connection", e);
         }
     }
 }

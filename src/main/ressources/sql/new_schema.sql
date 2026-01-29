@@ -14,16 +14,9 @@ CREATE TABLE dish (
     selling_price NUMERIC(10, 2)
 );
 
-CREATE TABLE IF NOT EXISTS "order"(
-    id SERIAL PRIMARY KEY,
-    reference VARCHAR(255),
-    creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    type_command command_type NOT NULL,
-    "status" command_status NOT NULL
-);
 
 
-CREATE TABLE ingredient (
+ CREATE TABLE ingredient (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     price NUMERIC(10, 2) NOT NULL, 
@@ -56,6 +49,9 @@ CREATE TABLE IF NOT EXISTS dish_order(
     quantity NUMERIC(10, 1) NOT NULL
 );
 
+INSERT INTO dish_order (id_order, id_dish, quantity)
+VALUES (5, 3, 2.0);
+
 
 DROP TABLE stock_movement;
 
@@ -73,7 +69,14 @@ INSERT INTO stock_movement (id_ingredient, quantity, "type", unit, creation_date
 ;
 
 
+CREATE TABLE IF NOT EXISTS "order"(
+    id SERIAL PRIMARY KEY,
+    reference VARCHAR(255),
+    type_command command_type NOT NULL,
+    "status" command_status NOT NULL,
+     creation_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO "order" (id, reference, type_command, "status",  creation_datetime) VALUES (1, 'ORD100','TAKE_AWAY','DELIVRED', '2024-01-06 15:00'),
+(2, 'ORD102',  'EAT_IN','CREATED', '2024-01-06 15:02');
 
-
-
-
+SELECT * FROM "order"; 

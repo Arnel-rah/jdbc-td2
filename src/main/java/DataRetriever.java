@@ -1,3 +1,4 @@
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -509,4 +510,48 @@ public class DataRetriever {
             throw new RuntimeException("Error database connection", e);
         }
     }
+
+    // Exercice TD5 : Java & PostgreSQL (JDBC) Codons autrement !
+    StockValue getStockValue(Instant t, Integer ingredientIdentifier) {
+    if (ingredientIdentifier == null || t == null) {
+        throw new IllegalArgumentException("ingredientIdentifier et t sont obligatoires");
+    }
+
+    DBConnection db = new DBConnection();
+
+    try (Connection conn = db.getConnection()) {
+
+        String sumQuery = """
+            SELECT id_ingredient,
+                   SUM(quantity * CASE WHEN "type" = 'OUT' THEN -1 ELSE 1 END) AS actual_quantity
+            FROM stock_movement
+            WHERE creation_datetime <= ?
+              AND id_ingredient = ?
+            GROUP BY id_ingredient
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sumQuery)) {
+
+            ps.setTimestamp(1, Timestamp.from(t));
+            ps.setInt(2, ingredientIdentifier);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (rs.next()) {
+                    StockValue stockValue = new StockValue();
+                    stockValue.setQuantity(rs.getDouble("actual_quantity"));
+                    return stockValue;
+                }
+            }
+        }
+
+    } catch (SQLException e) {
+        throw new RuntimeException("Database error while fetching stock value", e);
+    }
+
+    return new StockValue();
+}
+
+   
+
 }

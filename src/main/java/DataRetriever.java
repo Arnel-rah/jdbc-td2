@@ -513,15 +513,15 @@ public class DataRetriever {
 
     // Exercice TD5 : Java & PostgreSQL (JDBC) Codons autrement !
     StockValue getStockValue(Instant t, Integer ingredientIdentifier) {
-    if (ingredientIdentifier == null || t == null) {
-        throw new IllegalArgumentException("ingredientIdentifier et t sont obligatoires");
-    }
+        if (ingredientIdentifier == null || t == null) {
+            throw new IllegalArgumentException("ingredientIdentifier et t sont obligatoires");
+        }
 
-    DBConnection db = new DBConnection();
+        DBConnection db = new DBConnection();
 
-    try (Connection conn = db.getConnection()) {
+        try (Connection conn = db.getConnection()) {
 
-        String sumQuery = """
+            String sumQuery = """
             SELECT id_ingredient,
                    SUM(quantity * CASE WHEN "type" = 'OUT' THEN -1 ELSE 1 END) AS actual_quantity
             FROM stock_movement
@@ -530,28 +530,64 @@ public class DataRetriever {
             GROUP BY id_ingredient
         """;
 
-        try (PreparedStatement ps = conn.prepareStatement(sumQuery)) {
+            try (PreparedStatement ps = conn.prepareStatement(sumQuery)) {
 
-            ps.setTimestamp(1, Timestamp.from(t));
-            ps.setInt(2, ingredientIdentifier);
+                ps.setTimestamp(1, Timestamp.from(t));
+                ps.setInt(2, ingredientIdentifier);
+
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    if (rs.next()) {
+                        StockValue stockValue = new StockValue();
+                        stockValue.setQuantity(rs.getDouble("actual_quantity"));
+                        return stockValue;
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching stock value", e);
+        }
+
+        return new StockValue();
+    }
+
+// 2
+    Double getDishCost(Integer dishId) {
+    if (dishId == null) {
+        throw new IllegalArgumentException("dishId est obligatoire");
+    }
+
+    DBConnection db = new DBConnection();
+
+    try (Connection conn = db.getConnection()) {
+
+        String query = """
+            SELECT SUM(di.quantity_required * i.price) AS total_cost
+            FROM DishIngredient di
+            JOIN ingredient i ON di.id_ingredient = i.id
+            WHERE di.id_dish = ?
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, dishId);
 
             try (ResultSet rs = ps.executeQuery()) {
-
                 if (rs.next()) {
-                    StockValue stockValue = new StockValue();
-                    stockValue.setQuantity(rs.getDouble("actual_quantity"));
-                    return stockValue;
+                    return rs.getDouble("total_cost");
                 }
             }
         }
 
     } catch (SQLException e) {
-        throw new RuntimeException("Database error while fetching stock value", e);
+        throw new RuntimeException("Erreur de BD", e);
     }
 
-    return new StockValue();
+    return 0.0;
 }
 
-   
+
+
+
 
 }

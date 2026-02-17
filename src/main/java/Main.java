@@ -15,6 +15,9 @@ public class Main {
 
     Double cost = retriever.getDishCost(dishId);
     System.out.println("total cost : " + cost);
+
+    Double margin = retriever.getGrossMargin(dishId);
+    System.out.println("Gross margin  : " + margin);
 }
 
 }

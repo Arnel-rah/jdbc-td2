@@ -554,40 +554,71 @@ public class DataRetriever {
 
 // 2
     Double getDishCost(Integer dishId) {
-    if (dishId == null) {
-        throw new IllegalArgumentException("dishId est obligatoire");
-    }
+        if (dishId == null) {
+            throw new IllegalArgumentException("dishId est obligatoire");
+        }
 
-    DBConnection db = new DBConnection();
+        DBConnection db = new DBConnection();
 
-    try (Connection conn = db.getConnection()) {
+        try (Connection conn = db.getConnection()) {
 
-        String query = """
+            String query = """
             SELECT SUM(di.quantity_required * i.price) AS total_cost
             FROM DishIngredient di
             JOIN ingredient i ON di.id_ingredient = i.id
             WHERE di.id_dish = ?
         """;
 
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, dishId);
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setInt(1, dishId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getDouble("total_cost");
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getDouble("total_cost");
+                    }
                 }
             }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur de BD", e);
         }
 
-    } catch (SQLException e) {
-        throw new RuntimeException("Erreur de BD", e);
+        return 0.0;
     }
 
-    return 0.0;
-}
+// --
+    Double getGrossMargin(Integer dishId) {
+        if (dishId == null) {
+            throw new IllegalArgumentException("dishId est obligatoire");
+        }
+        DBConnection db = new DBConnection();
+        try (Connection conn = db.getConnection()) {
 
+            String query = """
+            SELECT 
+                d.selling_price - SUM(di.quantity_required * i.price) AS gross_margin
+            FROM dish d
+            JOIN DishIngredient di ON di.id_dish = d.id
+            JOIN ingredient i ON di.id_ingredient = i.id
+            WHERE d.id = ?
+            GROUP BY d.id, d.selling_price
+        """;
 
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setInt(1, dishId);
 
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getDouble("gross_margin");
+                    }
+                }
+            }
 
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error while fetching gross margin", e);
+        }
+
+        return 0.0;
+    }
 
 }

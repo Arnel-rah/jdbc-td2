@@ -1,4 +1,4 @@
-CREATE TYPE dish_type AS ENUM ('STARTER', 'MAIN', 'DESSERT'); -- 
+CREATE TYPE dish_type AS ENUM ('STARTER', 'MAIN', 'DESSERT');
 CREATE TYPE ingredient_category AS ENUM ('VEGETABLE', 'MEAT', 'FRUIT', 'DAIRY', 'OTHER'); 
 CREATE TYPE unit_type AS ENUM ('PCS', 'KG', 'L');
 CREATE TYPE movement_type AS ENUM ('IN', 'OUT');
@@ -79,4 +79,18 @@ CREATE TABLE IF NOT EXISTS "order"(
 INSERT INTO "order" (id, reference, type_command, "status",  creation_datetime) VALUES (1, 'ORD100','TAKE_AWAY','DELIVRED', '2024-01-06 15:00'),
 (2, 'ORD102',  'EAT_IN','CREATED', '2024-01-06 15:02');
 
-SELECT * FROM "order"; 
+SELECT * FROM "stock_movement" WHERE id_ingredient = 1 AND "type" = 'OUT' AND creation_datetime >= '2024-01-01' AND creation_datetime < '2024-02-01';
+SELECT * FROM "stock_movement";
+SELECT 
+    id_ingredient,
+    SUM(
+        CASE 
+            WHEN "type" = 'OUT' THEN quantity * -1
+            ELSE quantity
+        END
+    ) AS actual_quantity
+FROM stock_movement
+WHERE id_ingredient = 1
+  AND creation_datetime >= '2024-01-01 00:00:00'
+  AND creation_datetime < '2024-02-01 00:00:00'
+GROUP BY id_ingredient;

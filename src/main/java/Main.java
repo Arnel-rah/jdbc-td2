@@ -1,26 +1,16 @@
-
+import java.time.Instant;
 
 public class Main {
 
-    public static void main(String[] args) {
-    DataRetriever data = new DataRetriever();
+ public static void main(String[] args) {
+    DataRetriever retriever = new DataRetriever();
 
-    try {
-        Order order = data.findOrderByReference("ORD102");
-        if (order == null) {
-            System.out.println("non trouve");
-            return;
-        }
+    Instant t = Instant.parse("2024-02-01T00:00:00Z");
+    Integer ingredientId = 1;
 
-        System.out.println("Avant : " + order.getTypeOrder());
+    StockValue result = retriever.getStockValue(t, ingredientId);
 
-        order.setTypeOrder(TypeOrder.EAT_IN);
-        Order updated = data.updateOrder(order);
-
-        System.out.println("Après modification : " + updated.getTypeOrder());
-
-    } catch (Exception e) {
-        throw new RuntimeException(e);
-    }
+    System.out.println("quantity actuel: " + result.getQuantity());
 }
+
 }
